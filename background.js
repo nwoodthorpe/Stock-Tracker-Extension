@@ -5,34 +5,29 @@ function createIcon(price, stock, up){
   var context = canvas.getContext('2d');
 
   // start with a large font size
-  var fontsize=8;
+  var fontsize=16;
   var fontface = 'Times New Roman';
   var split = stock.split(':');
   var text = split.length > 1 ? split[1] : split[0];
 
-  context.font = "8px Times New Roman"
+  // lower the font size until the text fits the canvas
+  do{
+    fontsize--;
+    context.font=fontsize+"px "+fontface;
+  }while(context.measureText(text).width>canvas.width)
+
   context.fillStyle = "black";
-  context.fillText(text, 0, 8);
+  context.fillText(text, 0, 12);
 
-  fontsize = 20;
-  text = price.split('.')[0];
+  fontsize = 16;
+  text = price;
   do{
     fontsize--;
     context.font=fontsize+"px "+fontface;
   }while(context.measureText(text).width>canvas.width)
 
   context.fillStyle = up ? "green" : "red";
-  context.fillText(text, 0, 20);
-
-  fontsize = 20;
-  text = price.split('.')[1];
-  do{
-    fontsize--;
-    context.font=fontsize+"px "+fontface;
-  }while(context.measureText(text).width>canvas.width)
-
-  context.fillStyle = up ? "green" : "red";
-  context.fillText(text, 0, 32);
+  context.fillText(text, 0, 28);
 
   var imageData = context.getImageData(0, 0, 32, 32);
   chrome.browserAction.setIcon({
