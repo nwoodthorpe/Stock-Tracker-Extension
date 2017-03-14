@@ -1,4 +1,18 @@
+// Price sometimes gets formatted weirdly by the API, so we tidy it here
+function cleanPrice(price){
+  var dollar = price.split('.')[0];
+  var cent = price.split('.')[1];
+
+  dollar = dollar.split(',').join('');
+  cent = cent.substring(0, 2);
+
+  return dollar + "." + cent;
+}
+
 function createIcon(price, stock, up){
+  console.log(price);
+  price = cleanPrice(price.toString());
+
   var canvas = document.createElement('canvas');
   canvas.width = 32;
   canvas.height = 32;
@@ -49,15 +63,23 @@ function onTick(){
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
         try{
-          var resp = JSON.parse(xhr.responseText.substring(3))[0];
-          console.log(stock + ": " + resp["l"]);
-          createIcon(resp["l"], stock, resp["c"].indexOf('-') == -1 ? false : true);
+          if(stock != "eth"){
+            var resp = JSON.parse(xhr.responseText.substring(3))[0];
+            createIcon(resp["l"], stock, resp["c"].indexOf('-') == -1 ? false : true);
+          }else{
+            var resp = JSON.parse(xhr.responseText);
+            createIcon(resp["price"]["usd"], "Eth", resp["change"].indexOf('-') == -1 ? false : true)
+          }
         }catch(e){
           console.error(e);
         }
       }
     };
-    xhr.open("GET", "http://finance.google.com/finance/info?client=ig&q=" + stock, true);
+    if(stock != "eth"){
+      xhr.open("GET", "http://finance.google.com/finance/info?client=ig&q=" + stock, true);
+    }else{
+      xhr.open("GET", "https://coinmarketcap-nexuist.rhcloud.com/api/eth", true);
+    }
     xhr.send();
 
     chrome.storage.local.set({'clock-index': stocks[index + 1] ? index + 1 : 0}, function(){});
