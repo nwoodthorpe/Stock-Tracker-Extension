@@ -1,0 +1,26 @@
+body {
+  min-width: 400px; /* your desired width */
+  max-width: 100%;
+  min-height: 320px; /* your desired width */
+  max-height: 100%;
+}
+
+body > div {
+  margin-bottom: 20px;
+}
+
+.disabled {
+  display: none;
+}
+
+.error {
+  color: red;
+}
+
+.row {
+  display: flex;
+}
+
+.remove-button {
+  margin-right: 20px;
+}
