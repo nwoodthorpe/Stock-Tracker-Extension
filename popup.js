@@ -68,8 +68,9 @@ function onStockButtonClicked(){
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
         try{
-          if(stock != "eth")
+          if(stock != "eth"){
             JSON.parse(xhr.responseText.substring(3));
+          }
           // If it parsed correctly, assume the response was good and this is a valid stock
 
           chrome.storage.local.get('stocks', function(res){

@@ -9,8 +9,7 @@ function cleanPrice(price){
   return dollar + "." + cent;
 }
 
-function createIcon(price, stock, up){
-  console.log(price);
+function createIcon(price, stock, up, scroll = 0){
   price = cleanPrice(price.toString());
 
   var canvas = document.createElement('canvas');
@@ -19,40 +18,36 @@ function createIcon(price, stock, up){
   var context = canvas.getContext('2d');
 
   // start with a large font size
-  var fontsize=16;
-  var fontface = 'Times New Roman';
+  context.font = "28px Times New Roman";
   var split = stock.split(':');
-  var text = split.length > 1 ? split[1] : split[0];
-
-  // lower the font size until the text fits the canvas
-  do{
-    fontsize--;
-    context.font=fontsize+"px "+fontface;
-  }while(context.measureText(text).width>canvas.width)
+  var name = split.length > 1 ? split[1] : split[0];
 
   context.fillStyle = "black";
-  context.fillText(text, 0, 12);
-
-  fontsize = 16;
-  text = price;
-  do{
-    fontsize--;
-    context.font=fontsize+"px "+fontface;
-  }while(context.measureText(text).width>canvas.width)
+  context.fillText(name, 30 - scroll, 26);
 
   context.fillStyle = up ? "green" : "red";
-  context.fillText(text, 0, 28);
+  context.fillText(price, 40 + context.measureText(name).width - scroll, 28);
+
+  chrome.storage.local.set({'scroll': scroll + 1}, function(){});
 
   var imageData = context.getImageData(0, 0, 32, 32);
   chrome.browserAction.setIcon({
     imageData: imageData
   });
+
+  if (scroll > context.measureText(name).width + context.measureText(price).width + 45){
+    onTick();
+  }else{
+    setTimeout(function(){ createIcon(price, stock, up, scroll + 0.5)}, 10);
+  }
 }
 
 function onTick(){
-  chrome.storage.local.get(['clock-index', 'stocks'], function(res){
+  chrome.storage.local.get(['clock-index', 'stocks', 'text', 'price'], function(res){
     var index = res['clock-index'];
     var stocks = res['stocks'];
+    var text = res['text'];
+    var price = res['price']
 
     if(!stocks || stocks == []) return;
     if(!index) index = 0;
@@ -65,11 +60,21 @@ function onTick(){
         try{
           if(stock != "eth"){
             var resp = JSON.parse(xhr.responseText.substring(3))[0];
-            createIcon(resp["l"], stock, resp["c"].indexOf('-') == -1 ? false : true);
+            console.log(resp["c"])
+            createIcon(resp["l"], stock, resp["c"].indexOf('-') == -1);
           }else{
+
             var resp = JSON.parse(xhr.responseText);
-            createIcon(resp["price"]["usd"], "Eth", resp["change"].indexOf('-') == -1 ? false : true)
+            console.log(resp["change"]);
+            createIcon(resp["price"]["usd"], "Eth", resp["change"].indexOf('-') == -1)
           }
+
+          chrome.storage.local.set(
+            {
+              'clock-index': stocks[index + 1] ? index + 1 : 0,
+              'price': resp['l'],
+              'text': stock
+            }, function(){});
         }catch(e){
           console.error(e);
         }
@@ -81,9 +86,7 @@ function onTick(){
       xhr.open("GET", "https://coinmarketcap-nexuist.rhcloud.com/api/eth", true);
     }
     xhr.send();
-
-    chrome.storage.local.set({'clock-index': stocks[index + 1] ? index + 1 : 0}, function(){});
   });
 }
 
-setInterval(onTick, 3000);
+onTick();
